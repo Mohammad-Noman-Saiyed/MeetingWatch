@@ -1,4 +1,4 @@
-import logo from "../assets/MoneyWatchLogo.png";
+import logo from "../assets/MeetingWatchLogo.png";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {

@@ -157,12 +157,19 @@ router.get(
       return res.json({ advice: `No meetings logged this ${period} yet.` });
     }
 
-    const prompt = `You are a meeting-productivity advisor. Based on this ${period} summary, give brief, actionable overall advice (4-5 sentences):
-Number of meetings: ${stats.meeting_count}
-Average rating (1-5): ${stats.avg_rating ?? "not rated"}
-Average engagement (1-10): ${stats.avg_engagement ?? "not rated"}
-Average length (minutes): ${stats.avg_length ?? "unknown"}
-Meetings that could have been an email: ${stats.email_count}`;
+    const prompt = `You are a meeting-productivity advisor. Based on this ${period} summary, give actionable advice. You MUST format your response EXACTLY with these four headings, providing 3-5 sentences for each category (THIS IS STRICT!). Do not add any introduction or conclusion paragraphs. No extra fluff apart from what you're told.
+
+    Productivity/engagement:
+    Meeting length:
+    Meeting cost:
+    Overall rating:
+
+    Data:
+    Number of meetings: ${stats.meeting_count}
+    Average rating (1-5): ${stats.avg_rating ?? "not rated"}
+    Average engagement (1-10): ${stats.avg_engagement ?? "not rated"}
+    Average length (minutes): ${stats.avg_length ?? "unknown"}
+    Meetings that could have been an email: ${stats.email_count}`;
 
     const aiResponse = await genAI.models.generateContent({
       model: "gemini-3.7-flash",

@@ -14,16 +14,16 @@ const Intro = () => {
           How does it work?
         </h3>
         <p className="pl-4 pr-16 text-2xl text-gray-200">
-          Right before you start your meeting, start the MoneyWatch stop watch
+          Right before you start your meeting, start the MeetingWatch stop watch
           which times how long your meeting is. Optionally, you can select which
-          employees/attendees are in the call with you and MoneyWatch should
+          employees/attendees are in the call with you and MeetingWatch should
           display the real-time salary usage every second of the meeting. You
           can enter further details after every meeting such as how productive
           the meeting was and attendee engagement + energy during the meetings
           to provide you with a meeting analysis.
         </p>
         <h3 className="font-bold text-white text-4xl py-8">
-          Why use MoneyWatch?
+          Why use MeetingWatch?
         </h3>
         <p className="pl-4 pr-16 text-2xl text-gray-200">
           MeetingWatch provides you with weekly, monthly, and yearly summaries

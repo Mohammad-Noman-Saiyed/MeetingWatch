@@ -48,6 +48,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Fetch Chart Trends
   useEffect(() => {
     const fetchTrends = async () => {
       setIsLoading(true);
@@ -66,8 +67,6 @@ const Dashboard = () => {
         const raw: TrendPoint[] = await response.json();
         const points: ChartPoint[] = raw.map((point) => ({
           label: formatLabel(point.period, period),
-          // Nulls stay null (e.g. a bucket with no rated meetings) — never
-          // silently coerced to 0, since that would misrepresent the data.
           value: point.value === null ? null : Number(point.value),
         }));
         setData(points);
@@ -81,16 +80,20 @@ const Dashboard = () => {
     fetchTrends();
   }, [period, metric]);
 
+  // Advice States
   const [isAdviceLoading, setIsAdviceLoading] = useState(false);
   const [adviceError, setAdviceError] = useState("");
   const [textAdvice, setTextAdvice] = useState("");
-  const [popup, setPopup] = useState(false);
+  const [lastAdvicePeriod, setLastAdvicePeriod] = useState<Period | null>(null);
 
-  const handleGetAdvice = async () => {
+  // Handle AI Advice Logic
+  const handleGetAdvice = async (targetPeriod: Period) => {
     try {
       setIsAdviceLoading(true);
+      setAdviceError("");
+
       const adviceResponse = await fetch(
-        "http://localhost:4000/api/meetings/advice-summary",
+        `http://localhost:4000/api/meetings/advice-summary?period=${targetPeriod}`,
         {
           method: "GET",
           credentials: "include",
@@ -99,17 +102,29 @@ const Dashboard = () => {
 
       const adviceData = await adviceResponse.json();
 
-    
-    if (!adviceResponse.ok) {
+      if (!adviceResponse.ok) {
         setAdviceError(
           adviceData.error || "Something went wrong. Please try again.",
         );
         return;
-    }
-    }finally {
+      }
+
+      setTextAdvice(adviceData.advice);
+      setLastAdvicePeriod(targetPeriod); // Lock in what period this advice is for
+    } catch (err) {
+      setAdviceError("Could not reach the server to get advice.");
+    } finally {
       setIsAdviceLoading(false);
     }
   };
+
+  // Auto-load weekly advice on the very first render
+  useEffect(() => {
+    handleGetAdvice("weekly");
+  }, []);
+
+  // Determine button state based on dropdown vs active advice
+  const buttonRequiresUpdate = lastAdvicePeriod && lastAdvicePeriod !== period;
 
   return (
     <AppLayout activePage="Dashboard">
@@ -237,13 +252,50 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
       )}
-      <div>
-        <button className="cursor-pointer bg-pink-500 " onClick={handleGetAdvice}>
-          Ask AI for specific advice
+
+      {/* AI Advice Section */}
+      <div
+        className="flex flex-col items-start gap-4 mb-10 border-t pt-8"
+        style={{ borderColor: "rgba(62,207,142,0.18)" }}
+      >
+        <button
+          className={`cursor-pointer px-6 py-3 w-full font-semibold rounded-lg transition-all border-2 disabled:opacity-50
+            ${
+              buttonRequiresUpdate
+                ? "bg-transparent text-pink-400 border-pink-400/50 hover:bg-pink-400/10"
+                : "bg-pink-500 text-white border-pink-500 hover:bg-pink-400"
+            }`}
+          onClick={() => handleGetAdvice(period)}
+          disabled={isAdviceLoading}
+        >
+          {isAdviceLoading
+            ? "Generating..."
+            : buttonRequiresUpdate
+              ? `Update AI Advice for ${period} view`
+              : "Ask AI for specific advice"}
         </button>
+
+        {adviceError && <p style={{ color: "#E0574C" }}>{adviceError}</p>}
+
+        {!isAdviceLoading && textAdvice && !buttonRequiresUpdate && (
+          <div
+            className="font-mono rounded-xl p-6 w-full mt-2"
+            // whitespace-pre-wrap ensures the AI's newlines render properly
+            style={{
+              background: "rgba(236,72,153,0.05)",
+              border: "1px solid rgba(236,72,153,0.2)",
+              color: "#DCEAE3",
+              whiteSpace: "pre-wrap",
+              lineHeight: "1.6",
+              
+            }}
+          >
+            {textAdvice}
+          </div>
+        )}
       </div>
     </AppLayout>
   );
-};
+};;
 
 export default Dashboard;

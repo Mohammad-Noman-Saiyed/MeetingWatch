@@ -48,7 +48,7 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
         style={{ borderColor: "rgba(62,207,142,0.18)" }}
       >
         <span className="text-lg font-semibold tracking-widest text-white">
-          MoneyWatch
+          MeetingWatch
         </span>
 
         <button

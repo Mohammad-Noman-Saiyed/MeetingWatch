@@ -1,0 +1,13 @@
+/* Make sure this URL is exactly the one Google Fonts gave you */
+@import url("https://fonts.googleapis.com/css2?family=Bitcount+Prop+Single&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  /* This makes your dotted font the absolute default for the whole website */
+  --font-sans: "Bitcount Prop Single", sans-serif;
+
+  /* Keep these so your MainPage animation code still works */
+  --font-bitcoin: "Bitcount Prop Single", sans-serif;
+  --font-bitcount: "Bitcount Prop Single", sans-serif;
+}

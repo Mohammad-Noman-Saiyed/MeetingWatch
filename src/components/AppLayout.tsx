@@ -14,6 +14,12 @@ const SIDEBAR_ITEMS = [
     accent: "#E8B93E",
     path: "/meetings/past",
   },
+  {
+    key: "employees",
+    label: "Employees",
+    accent: "#B48CE0",
+    path: "/employees",
+  },
 ];
 
 type AppLayoutProps = {

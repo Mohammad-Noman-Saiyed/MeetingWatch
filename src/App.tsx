@@ -10,6 +10,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import PastMeetings from "./pages/PastMeetings";
+import Employees from "./pages/Employees";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/meetings/past" element={<PastMeetings />} />
+        <Route path="/employees" element={<Employees />} />
       </Routes>
     </div>
   );

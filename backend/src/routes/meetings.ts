@@ -197,26 +197,21 @@ router.post("/start", requireAuth, async (req: Request, res: Response) => {
   const meeting = meetingResult.rows[0];
 
   if (attendeeIds && attendeeIds.length > 0) {
-    const employeesResult = await pool.query(
-      `SELECT id, name, wage_amount, wage_type FROM employees WHERE user_id = $1 AND id = ANY($2::int[])`,
-      [req.userId, attendeeIds],
-    );
+  
+  const employeesResult = await pool.query(
+    `SELECT id, name, wage_amount, wage_type FROM employees WHERE user_id = $1 AND id = ANY($2::int[])`,
+    [req.userId, attendeeIds]
+  );
 
-    for (const employee of employeesResult.rows) {
-      await pool.query(
-        `INSERT INTO meeting_attendees (meeting_id, employee_id, name, wage_amount, wage_type)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [
-          meeting.id,
-          employee.id,
-          employee.name,
-          employee.wage_amount,
-          employee.wage_type,
-        ],
-      );
-    }
+  for (const employee of employeesResult.rows) {
+    await pool.query(
+      `INSERT INTO meeting_attendees (meeting_id, employee_id, name, wage_amount, wage_type)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [meeting.id, employee.id, employee.name, employee.wage_amount, employee.wage_type]
+    );
   }
 
+    }
   res.status(201).json(meeting);
 });
 

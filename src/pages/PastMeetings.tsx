@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import AppLayout from "../components/AppLayout";
+import LogMeetingModal from "../components/LogMeetingModal";
 
 type Meeting = {
   id: number;
@@ -14,6 +15,8 @@ const PastMeetings = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  const [showLogModal, setShowLogModal] = useState(false);
 
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -52,6 +55,13 @@ const PastMeetings = () => {
         <span className="text-xs" style={{ color: "#EEEEEE" }}>
           {meetings.length} logged
         </span>
+        <button
+          onClick={() => setShowLogModal(true)}
+          className="rounded-lg px-4 py-2 text-xs font-medium cursor-pointer border"
+          style={{ borderColor: "rgba(62,207,142,0.4)", color: "#3ECF8E" }}
+        >
+          + Log a past meeting
+        </button>
       </div>
 
       {isLoading && <p style={{ color: "#5E7A6F" }}>Loading meetings...</p>}
@@ -143,6 +153,14 @@ const PastMeetings = () => {
             </tbody>
           </table>
         </div>
+      )}
+      {showLogModal && (
+        <LogMeetingModal
+          onClose={() => setShowLogModal(false)}
+          onMeetingLogged={(newMeeting) =>
+            setMeetings((prev) => [newMeeting, ...prev])
+          }
+        />
       )}
     </AppLayout>
   );

@@ -9,18 +9,20 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import AppLayout from "../components/AppLayout";
+import StartMeetingModal from "../components/StartMeetingModal";
+import LiveMeetingView from "../components/LiveMeetingView";
+import EndMeetingModal from "../components/EndMeetingModal";
+import { useMeeting } from "../context/MeetingContext";
 
 type Period = "weekly" | "monthly" | "annually";
 type Metric = "count" | "rating" | "engagement" | "length";
 
-type TrendPoint = {
-  period: string;
-  value: string | null;
-};
-
-type ChartPoint = {
-  label: string;
-  value: number | null;
+type TrendPoint = { period: string; value: string | null };
+type ChartPoint = { label: string; value: number | null };
+type Employee = {
+  id: number;
+  wage_amount: string;
+  wage_type: "hourly" | "yearly";
 };
 
 const METRIC_LABELS: Record<Metric, string> = {
@@ -42,13 +44,28 @@ const formatLabel = (isoDate: string, period: Period) => {
 };
 
 const Dashboard = () => {
+  const { activeMeeting } = useMeeting();
+
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [showEndModal, setShowEndModal] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+
   const [period, setPeriod] = useState<Period>("weekly");
   const [metric, setMetric] = useState<Metric>("rating");
   const [data, setData] = useState<ChartPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch Chart Trends
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const response = await fetch("http://localhost:4000/api/employees", {
+        credentials: "include",
+      });
+      if (response.ok) setEmployees(await response.json());
+    };
+    fetchEmployees();
+  }, []);
+
   useEffect(() => {
     const fetchTrends = async () => {
       setIsLoading(true);
@@ -58,79 +75,48 @@ const Dashboard = () => {
           `http://localhost:4000/api/meetings/trends?period=${period}&metric=${metric}`,
           { credentials: "include" },
         );
-
         if (!response.ok) {
           setError("Could not load report data");
           return;
         }
-
         const raw: TrendPoint[] = await response.json();
-        const points: ChartPoint[] = raw.map((point) => ({
-          label: formatLabel(point.period, period),
-          value: point.value === null ? null : Number(point.value),
-        }));
-        setData(points);
-      } catch (err) {
+        setData(
+          raw.map((point) => ({
+            label: formatLabel(point.period, period),
+            value: point.value === null ? null : Number(point.value),
+          })),
+        );
+      } catch {
         setError("Could not reach the server");
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchTrends();
   }, [period, metric]);
 
-  // Advice States
-  const [isAdviceLoading, setIsAdviceLoading] = useState(false);
-  const [adviceError, setAdviceError] = useState("");
-  const [textAdvice, setTextAdvice] = useState("");
-  const [lastAdvicePeriod, setLastAdvicePeriod] = useState<Period | null>(null);
-
-  // Handle AI Advice Logic
-  const handleGetAdvice = async (targetPeriod: Period) => {
-    try {
-      setIsAdviceLoading(true);
-      setAdviceError("");
-
-      const adviceResponse = await fetch(
-        `http://localhost:4000/api/meetings/advice-summary?period=${targetPeriod}`,
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
-
-      const adviceData = await adviceResponse.json();
-
-      if (!adviceResponse.ok) {
-        setAdviceError(
-          adviceData.error || "Something went wrong. Please try again.",
-        );
-        return;
-      }
-
-      setTextAdvice(adviceData.advice);
-      setLastAdvicePeriod(targetPeriod); // Lock in what period this advice is for
-    } catch (err) {
-      setAdviceError("Could not reach the server to get advice.");
-    } finally {
-      setIsAdviceLoading(false);
-    }
-  };
-
-  // Auto-load weekly advice on the very first render
-  useEffect(() => {
-    handleGetAdvice("weekly");
-  }, []);
-
-  // Determine button state based on dropdown vs active advice
-  const buttonRequiresUpdate = lastAdvicePeriod && lastAdvicePeriod !== period;
-
   return (
     <AppLayout activePage="Dashboard">
+      {activeMeeting ? (
+        <LiveMeetingView
+          employees={employees}
+          onEndMeeting={() => setShowEndModal(true)}
+        />
+      ) : (
+        <button
+          onClick={() => setShowStartModal(true)}
+          className="w-full rounded-xl py-6 mb-10 text-lg font-semibold text-black transition-transform cursor-pointer hover:scale-[1.01]"
+          style={{
+            background: "linear-gradient(135deg, #3ECF8E 0%, #2EB37A 100%)",
+            boxShadow: "0 8px 30px -8px rgba(62,207,142,0.4)",
+          }}
+        >
+          + Start new meeting
+        </button>
+      )}
+
       <div className="flex items-center justify-between mb-2 flex-wrap gap-4">
         <h3 className="text-2xl font-semibold text-white">Meeting Reports</h3>
-
         <div className="flex items-center gap-3 flex-wrap">
           <label
             className="flex items-center gap-2 text-sm"
@@ -157,7 +143,6 @@ const Dashboard = () => {
               </option>
             </select>
           </label>
-
           <label
             className="flex items-center gap-2 text-sm"
             style={{ color: "#5E7A6F" }}
@@ -192,7 +177,6 @@ const Dashboard = () => {
 
       {isLoading && <p style={{ color: "#5E7A6F" }}>Loading report...</p>}
       {error && <p style={{ color: "#E0574C" }}>{error}</p>}
-
       {!isLoading && !error && data.length === 0 && (
         <p style={{ color: "#5E7A6F" }}>
           No meetings logged yet — start one above to see your trend here.
@@ -253,49 +237,17 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* AI Advice Section */}
-      <div
-        className="flex flex-col items-start gap-4 mb-10 border-t pt-8"
-        style={{ borderColor: "rgba(62,207,142,0.18)" }}
-      >
-        <button
-          className={`cursor-pointer px-6 py-3 w-full font-semibold rounded-lg transition-all border-2 disabled:opacity-50
-            ${
-              buttonRequiresUpdate
-                ? "bg-transparent text-pink-400 border-pink-400/50 hover:bg-pink-400/10"
-                : "bg-pink-500 text-white border-pink-500 hover:bg-pink-400"
-            }`}
-          onClick={() => handleGetAdvice(period)}
-          disabled={isAdviceLoading}
-        >
-          {isAdviceLoading
-            ? "Generating..."
-            : buttonRequiresUpdate
-              ? `Update AI Advice for ${period} view`
-              : "Ask AI for specific advice"}
-        </button>
-
-        {adviceError && <p style={{ color: "#E0574C" }}>{adviceError}</p>}
-
-        {!isAdviceLoading && textAdvice && !buttonRequiresUpdate && (
-          <div
-            className="font-mono rounded-xl p-6 w-full mt-2"
-            // whitespace-pre-wrap ensures the AI's newlines render properly
-            style={{
-              background: "rgba(236,72,153,0.05)",
-              border: "1px solid rgba(236,72,153,0.2)",
-              color: "#DCEAE3",
-              whiteSpace: "pre-wrap",
-              lineHeight: "1.6",
-              
-            }}
-          >
-            {textAdvice}
-          </div>
-        )}
-      </div>
+      {showStartModal && (
+        <StartMeetingModal onClose={() => setShowStartModal(false)} />
+      )}
+      {showEndModal && activeMeeting && (
+        <EndMeetingModal
+          meetingId={activeMeeting.id}
+          onClose={() => setShowEndModal(false)}
+        />
+      )}
     </AppLayout>
   );
-};;
+};
 
 export default Dashboard;

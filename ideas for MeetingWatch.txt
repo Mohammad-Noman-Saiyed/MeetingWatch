@@ -1,0 +1,6 @@
+1. Add the  2-axis dropdown menu
+2. Add pop up to ask user if they really want to sign out or delete an employee
+3. change the navbar to only have the "sign-out" button in the top right if they're logged in.
+4. Have an AI join the meet and summarize the meet, show meeting minutes/notes, automatically fill out the form, maybe have IT give the AI advice rather than Gemini.
+5. Revamp main page
+6. 

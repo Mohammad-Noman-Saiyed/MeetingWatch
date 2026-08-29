@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import AppLayout from "../components/AppLayout";
 import LogMeetingModal from "../components/LogMeetingModal";
+import AdviceModal from "../components/AdviceModal";
 
 type Meeting = {
   id: number;
@@ -46,6 +47,37 @@ const PastMeetings = () => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id],
     );
+  };
+
+  const [adviceModalOpen, setAdviceModalOpen] = useState(false);
+  const [adviceText, setAdviceText] = useState<string | null>(null);
+  const [isAdviceLoading, setIsAdviceLoading] = useState(false);
+  const [adviceError, setAdviceError] = useState("");
+
+  const handleGetAdvice = async (meetingId: number) => {
+    setAdviceModalOpen(true);
+    setAdviceText(null);
+    setAdviceError("");
+    setIsAdviceLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:4000/api/meetings/${meetingId}/advice`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        setAdviceError(data.error || "Could not get advice");
+        return;
+      }
+      setAdviceText(data.advice);
+    } catch {
+      setAdviceError("Could not reach the server");
+    } finally {
+      setIsAdviceLoading(false);
+    }
   };
 
   return (
@@ -138,6 +170,7 @@ const PastMeetings = () => {
                     </td>
                     <td className="py-4 px-5">
                       <button
+                        onClick={() => handleGetAdvice(meeting.id)}
                         className="rounded-md px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer border hover:bg-white/5"
                         style={{
                           borderColor: "rgba(62,207,142,0.4)",
@@ -160,6 +193,14 @@ const PastMeetings = () => {
           onMeetingLogged={(newMeeting) =>
             setMeetings((prev) => [newMeeting, ...prev])
           }
+        />
+      )}
+      {adviceModalOpen && (
+        <AdviceModal
+          advice={adviceText}
+          isLoading={isAdviceLoading}
+          error={adviceError}
+          onClose={() => setAdviceModalOpen(false)}
         />
       )}
     </AppLayout>

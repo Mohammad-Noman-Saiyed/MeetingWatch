@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
+import { useMeeting } from "../context/MeetingContext";
 
 const SIDEBAR_ITEMS = [
   {
@@ -31,6 +32,12 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
+    if (activeMeeting) {
+      const confirmed = window.confirm(
+        "A meeting is in progress. Sign out anyway?",
+      );
+      if (!confirmed) return;
+    }
     try {
       await fetch("http://localhost:4000/api/auth/signout", {
         method: "POST",
@@ -41,6 +48,18 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
     } finally {
       navigate("/signin");
     }
+  };
+
+  const { activeMeeting } = useMeeting();
+
+  const confirmNavigation = (path: string) => {
+    if (activeMeeting) {
+      const confirmed = window.confirm(
+        "A meeting is currently in progress. Leaving this page won't stop the meeting, are you sure you want to navigate away?",
+      );
+      if (!confirmed) return;
+    }
+    navigate(path);
   };
 
   return (
@@ -92,7 +111,7 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
           {SIDEBAR_ITEMS.map((item) => (
             <button
               key={item.key}
-              onClick={() => navigate(item.path)}
+              onClick={() => confirmNavigation(item.path)}
               className="group flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium transition-colors cursor-pointer hover:bg-white/5"
             >
               <span

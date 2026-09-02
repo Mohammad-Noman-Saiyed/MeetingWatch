@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { requireAuth } from "../auth/middleware";
 import { genAI } from "../ai/gemini";
+import { requirePremium } from "../auth/premium";
+import { json } from "node:stream/consumers";
 
 const router = Router();
 
@@ -249,8 +251,8 @@ router.post("/:id/end", requireAuth, async (req: Request, res: Response) => {
   const updateResult = await pool.query(
     `UPDATE meetings
      SET status = 'completed', ended_at = NOW(), duration_minutes = $1,
-         notes = $2, overall_rating = $3, engagement_score = $4, could_be_email = $5
-     WHERE id = $6 AND user_id = $7
+         notes = $2, overall_rating = $3, engagement_score = $4, could_be_email = $5, final_cost = $6
+     WHERE id = $7 AND user_id = $8
      RETURNING title, meeting_date, duration_minutes, overall_rating, engagement_score, could_be_email, notes`,
     [
       durationMinutes,
@@ -258,6 +260,7 @@ router.post("/:id/end", requireAuth, async (req: Request, res: Response) => {
       overallRating || null,
       engagementScore || null,
       couldBeEmail || false,
+      finalCost,
       meetingId,
       req.userId,
     ],
@@ -292,5 +295,107 @@ Notes: ${meeting.notes ?? "none"}`;
     advice: adviceText,
   });
 });
+
+router.get('/comparison', requireAuth, requirePremium, async (req: Request, res: Response ) => {
+  const  { xMetric, yMetric } = req.query;
+
+  const validMetrics: Record<string, string> = {
+    rating: "overall_rating",
+    engagement: "engagement_score",
+    length: "duration_minutes",
+    cost: "final_cost",
+  };
+
+  if (typeof xMetric !== "string"){
+    return res.status(400).json({ error: "Invalid x metric" });
+  }
+  if (typeof yMetric !== "string") {
+    return res.status(400).json({ error: "Invalid y metric" });
+  }
+  const xCol = validMetrics[xMetric];
+  const yCol = validMetrics[yMetric];
+
+  if(!xCol || !yCol){
+    return res.status(400).json({ error: "Invalid x or y metrics" });
+  }
+
+  const result = await pool.query(
+    `SELECT ${xCol} AS x, ${yCol} AS y
+    FROM meetings
+    WHERE user_id = $1 AND ${xCol} IS NOT NULL AND ${yCol} IS NOT NULL
+    ORDER BY x ASC`,
+    [req.userId]
+  );
+
+  res.json(result.rows.map((row) => ({ x: Number(row.x), y: Number(row.y) })));
+
+});
+
+router.get(
+  "/comparison/advice",
+  requireAuth,
+  requirePremium,
+  async (req: Request, res: Response) => {
+    const { xMetric, yMetric } = req.query;
+
+    const validMetrics: Record<string, string> = {
+      rating: "overall_rating",
+      engagement: "engagement_score",
+      length: "duration_minutes",
+      cost: "final_cost",
+    };
+    const metricLabels: Record<string, string> = {
+      rating: "overall rating (1-5)",
+      engagement: "engagement score (1-10)",
+      length: "meeting length (minutes)",
+      cost: "meeting cost ($)",
+    };
+
+    if (typeof xMetric !== "string") {
+      return res.status(400).json({ error: "Invalid x metric" });
+    }
+    if (typeof yMetric !== "string") {
+      return res.status(400).json({ error: "Invalid y metric" });
+    }
+    const xCol = validMetrics[xMetric];
+    const yCol = validMetrics[yMetric];
+
+    if (!xCol || !yCol) {
+      return res.status(400).json({ error: "Invalid x or y metrics" });
+    }
+
+    const result = await pool.query(
+      `SELECT COUNT(*) AS count, AVG(${xCol}) AS avg_x, AVG(${yCol}) AS avg_y
+       FROM meetings
+       WHERE user_id = $1 AND ${xCol} IS NOT NULL AND ${yCol} IS NOT NULL`,
+      [req.userId],
+    );
+
+    const stats = result.rows[0];
+
+    if (Number(stats.count) === 0) {
+      return res.json({
+        advice: "No meetings with both metrics logged yet.",
+      });
+    }
+
+    const xLabel = metricLabels[xMetric];
+    const yLabel = metricLabels[yMetric];
+
+    const prompt = `You are a meeting-productivity advisor. A user is comparing two meeting metrics on a scatter chart: ${xLabel} (x-axis) versus ${yLabel} (y-axis). Based on this data, give brief, actionable advice (3-4 sentences) about what pattern might be present between these two metrics and how to improve future meetings.
+
+Data:
+Number of meetings with both metrics recorded: ${stats.count}
+Average ${xLabel}: ${Number(stats.avg_x).toFixed(2)}
+Average ${yLabel}: ${Number(stats.avg_y).toFixed(2)}`;
+
+    const aiResponse = await genAI.models.generateContent({
+      model: "gemini-3.7-flash",
+      contents: prompt,
+    });
+
+    res.json({ advice: aiResponse.text });
+  },
+);
 
 export default router;

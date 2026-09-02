@@ -9,13 +9,16 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import AppLayout from "../components/AppLayout";
+import ComparisonChart from "../components/ComparisonChart";
 import StartMeetingModal from "../components/StartMeetingModal";
 import LiveMeetingView from "../components/LiveMeetingView";
 import EndMeetingModal from "../components/EndMeetingModal";
 import { useMeeting } from "../context/MeetingContext";
 
 type Period = "weekly" | "monthly" | "annually";
-type Metric = "count" | "rating" | "engagement" | "length";
+type Metric = "count" | "rating" | "engagement" | "length" | "cost";
+type ComparisonMetric = "rating" | "engagement" | "length" | "cost";
+type ActiveView = "trend" | "comparison";
 
 type TrendPoint = { period: string; value: string | null };
 type ChartPoint = { label: string; value: number | null };
@@ -30,6 +33,14 @@ const METRIC_LABELS: Record<Metric, string> = {
   rating: "Average Rating",
   engagement: "Average Engagement",
   length: "Average Length (min)",
+  cost: "Average Cost ($)",
+};
+
+const COMPARISON_METRIC_LABELS: Record<ComparisonMetric, string> = {
+  rating: "Overall Rating",
+  engagement: "Engagement Score",
+  length: "Duration (min)",
+  cost: "Cost ($)",
 };
 
 const formatLabel = (isoDate: string, period: Period) => {
@@ -50,11 +61,22 @@ const Dashboard = () => {
   const [showEndModal, setShowEndModal] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
 
+  const [activeView, setActiveView] = useState<ActiveView>("trend");
+
   const [period, setPeriod] = useState<Period>("weekly");
   const [metric, setMetric] = useState<Metric>("rating");
   const [data, setData] = useState<ChartPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [xMetric, setXMetric] = useState<ComparisonMetric>("rating");
+  const [yMetric, setYMetric] = useState<ComparisonMetric>("length");
+  const [comparisonData, setComparisonData] = useState<{ x: number; y: number }[]>([]);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [comparisonError, setComparisonError] = useState("");
+  const [adviceStale, setAdviceStale] = useState(true);
+  const [advice, setAdvice] = useState("");
+  const [adviceLoading, setAdviceLoading] = useState(false);
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -95,8 +117,53 @@ const Dashboard = () => {
     fetchTrends();
   }, [period, metric]);
 
+  useEffect(() => {
+    if (activeView !== "comparison") return;
+
+    const fetchComparison = async () => {
+      setComparisonLoading(true);
+      setComparisonError("");
+      setAdviceStale(true);
+      try {
+        const response = await fetch(
+          `http://localhost:4000/api/meetings/comparison?xMetric=${xMetric}&yMetric=${yMetric}`,
+          { credentials: "include" },
+        );
+        if (!response.ok) {
+          setComparisonError("Could not load comparison data");
+          return;
+        }
+        const raw = await response.json();
+        setComparisonData(raw);
+      } catch {
+        setComparisonError("Could not reach the server");
+      } finally {
+        setComparisonLoading(false);
+      }
+    };
+    fetchComparison();
+  }, [activeView, xMetric, yMetric]);
+
+  const handleAskAdvice = async () => {
+    setAdviceLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:4000/api/meetings/comparison/advice?xMetric=${xMetric}&yMetric=${yMetric}`,
+        { credentials: "include" },
+      );
+      if (!response.ok) return;
+      const raw = await response.json();
+      setAdvice(raw.advice);
+      setAdviceStale(false);
+    } finally {
+      setAdviceLoading(false);
+    }
+  };
+
   return (
     <AppLayout activePage="Dashboard">
+      {(isPremium: boolean) => (
+      <>
       {activeMeeting ? (
         <LiveMeetingView
           employees={employees}
@@ -116,74 +183,194 @@ const Dashboard = () => {
       )}
 
       <div className="flex items-center justify-between mb-2 flex-wrap gap-4">
-        <h3 className="text-2xl font-semibold text-white">Meeting Reports</h3>
-        <div className="flex items-center gap-3 flex-wrap">
-          <label
-            className="flex items-center gap-2 text-sm"
-            style={{ color: "#5E7A6F" }}
-          >
-            Metric
-            <select
-              value={metric}
-              onChange={(e) => setMetric(e.target.value as Metric)}
-              className="rounded-lg px-3 py-2 text-sm bg-transparent border cursor-pointer"
-              style={{ borderColor: "rgba(62,207,142,0.4)", color: "#DCEAE3" }}
+        <div className="flex items-center gap-4">
+          <h3 className="text-2xl font-semibold text-white">Meeting Reports</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveView("trend")}
+              className={`px-3 py-1 rounded-lg cursor-pointer text-sm font-medium transition-colors ${
+                activeView === "trend"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-transparent border text-gray-400 hover:text-white"
+              }`}
+              style={{
+                borderColor:
+                  activeView === "trend"
+                    ? "transparent"
+                    : "rgba(62,207,142,0.4)",
+              }}
             >
-              <option value="rating" style={{ background: "#0A0F0D" }}>
-                Rating
-              </option>
-              <option value="engagement" style={{ background: "#0A0F0D" }}>
-                Engagement
-              </option>
-              <option value="count" style={{ background: "#0A0F0D" }}>
-                Meeting count
-              </option>
-              <option value="length" style={{ background: "#0A0F0D" }}>
-                Length
-              </option>
-            </select>
-          </label>
-          <label
-            className="flex items-center gap-2 text-sm"
-            style={{ color: "#5E7A6F" }}
-          >
-            Change report to
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value as Period)}
-              className="rounded-lg px-3 py-2 text-sm bg-transparent border cursor-pointer"
-              style={{ borderColor: "rgba(62,207,142,0.4)", color: "#DCEAE3" }}
+              Trend
+            </button>
+            <button
+              onClick={() => isPremium && setActiveView("comparison")}
+              disabled={!isPremium}
+              title={
+                isPremium ? undefined : "Comparison charts are a premium feature"
+              }
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                !isPremium
+                  ? "bg-transparent border text-gray-600 cursor-not-allowed"
+                  : activeView === "comparison"
+                  ? "bg-emerald-600 text-white cursor-pointer"
+                  : "bg-transparent border text-gray-400 hover:text-white cursor-pointer"
+              }`}
+              style={{
+                borderColor:
+                  isPremium && activeView === "comparison"
+                    ? "transparent"
+                    : "rgba(62,207,142,0.4)",
+              }}
             >
-              <option value="weekly" style={{ background: "#0A0F0D" }}>
-                Weekly
-              </option>
-              <option value="monthly" style={{ background: "#0A0F0D" }}>
-                Monthly
-              </option>
-              <option value="annually" style={{ background: "#0A0F0D" }}>
-                Annually
-              </option>
-            </select>
-          </label>
+              Comparison
+            </button>
+          </div>
+          {!isPremium && (
+            <span className="text-xs" style={{ color: "#5E7A6F" }}>
+              Comparison charts are a premium feature
+            </span>
+          )}
         </div>
+        {activeView === "trend" ? (
+          <div className="flex items-center gap-3 flex-wrap">
+            <label
+              className="flex items-center gap-2 text-sm"
+              style={{ color: "#5E7A6F" }}
+            >
+              Metric
+              <select
+                value={metric}
+                onChange={(e) => setMetric(e.target.value as Metric)}
+                className="rounded-lg px-3 py-2 text-sm bg-transparent border cursor-pointer"
+                style={{
+                  borderColor: "rgba(62,207,142,0.4)",
+                  color: "#DCEAE3",
+                }}
+              >
+                <option value="rating" style={{ background: "#0A0F0D" }}>
+                  Rating
+                </option>
+                <option value="engagement" style={{ background: "#0A0F0D" }}>
+                  Engagement
+                </option>
+                <option value="count" style={{ background: "#0A0F0D" }}>
+                  Meeting count
+                </option>
+                <option value="length" style={{ background: "#0A0F0D" }}>
+                  Length
+                </option>
+              </select>
+            </label>
+            <label
+              className="flex items-center gap-2 text-sm"
+              style={{ color: "#5E7A6F" }}
+            >
+              Change report to
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value as Period)}
+                className="rounded-lg px-3 py-2 text-sm bg-transparent border cursor-pointer"
+                style={{
+                  borderColor: "rgba(62,207,142,0.4)",
+                  color: "#DCEAE3",
+                }}
+              >
+                <option value="weekly" style={{ background: "#0A0F0D" }}>
+                  Weekly
+                </option>
+                <option value="monthly" style={{ background: "#0A0F0D" }}>
+                  Monthly
+                </option>
+                <option value="annually" style={{ background: "#0A0F0D" }}>
+                  Annually
+                </option>
+              </select>
+            </label>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 flex-wrap">
+            <label
+              className="flex items-center gap-2 text-sm"
+              style={{ color: "#5E7A6F" }}
+            >
+              X-axis
+              <select
+                value={xMetric}
+                onChange={(e) => setXMetric(e.target.value as ComparisonMetric)}
+                className="rounded-lg px-3 py-2 text-sm bg-transparent border cursor-pointer"
+                style={{
+                  borderColor: "rgba(62,207,142,0.4)",
+                  color: "#DCEAE3",
+                }}
+              >
+                <option value="rating" style={{ background: "#0A0F0D" }}>
+                  Rating
+                </option>
+                <option value="engagement" style={{ background: "#0A0F0D" }}>
+                  Engagement
+                </option>
+                <option value="length" style={{ background: "#0A0F0D" }}>
+                  Length
+                </option>
+                <option value="cost" style={{ background: "#0A0F0D" }}>
+                  Cost
+                </option>
+              </select>
+            </label>
+            <label
+              className="flex items-center gap-2 text-sm"
+              style={{ color: "#5E7A6F" }}
+            >
+              Y-axis
+              <select
+                value={yMetric}
+                onChange={(e) => setYMetric(e.target.value as ComparisonMetric)}
+                className="rounded-lg px-3 py-2 text-sm bg-transparent border cursor-pointer"
+                style={{
+                  borderColor: "rgba(62,207,142,0.4)",
+                  color: "#DCEAE3",
+                }}
+              >
+                <option value="rating" style={{ background: "#0A0F0D" }}>
+                  Rating
+                </option>
+                <option value="engagement" style={{ background: "#0A0F0D" }}>
+                  Engagement
+                </option>
+                <option value="length" style={{ background: "#0A0F0D" }}>
+                  Length
+                </option>
+                <option value="cost" style={{ background: "#0A0F0D" }}>
+                  Cost
+                </option>
+              </select>
+            </label>
+          </div>
+        )}
       </div>
 
-      <p
-        className="text-xs uppercase tracking-[0.15em] mb-6"
-        style={{ color: "#5E7A6F" }}
-      >
-        {period}
-      </p>
+      {activeView === "trend" && (
+        <p
+          className="text-xs uppercase tracking-[0.15em] mb-6"
+          style={{ color: "#5E7A6F" }}
+        >
+          {period}
+        </p>
+      )}
 
-      {isLoading && <p style={{ color: "#5E7A6F" }}>Loading report...</p>}
-      {error && <p style={{ color: "#E0574C" }}>{error}</p>}
-      {!isLoading && !error && data.length === 0 && (
+      {activeView === "trend" && isLoading && (
+        <p style={{ color: "#5E7A6F" }}>Loading report...</p>
+      )}
+      {activeView === "trend" && error && (
+        <p style={{ color: "#E0574C" }}>{error}</p>
+      )}
+      {activeView === "trend" && !isLoading && !error && data.length === 0 && (
         <p style={{ color: "#5E7A6F" }}>
           No meetings logged yet — start one above to see your trend here.
         </p>
       )}
 
-      {!isLoading && !error && data.length > 0 && (
+      {activeView === "trend" && !isLoading && !error && data.length > 0 && (
         <div
           className="rounded-xl border p-6 mb-10"
           style={{ borderColor: "rgba(62,207,142,0.18)" }}
@@ -237,6 +424,56 @@ const Dashboard = () => {
         </div>
       )}
 
+      {activeView === "comparison" && comparisonLoading && (
+        <p style={{ color: "#5E7A6F" }}>Loading comparison...</p>
+      )}
+      {activeView === "comparison" && comparisonError && (
+        <p style={{ color: "#E0574C" }}>{comparisonError}</p>
+      )}
+      {activeView === "comparison" &&
+        !comparisonLoading &&
+        !comparisonError &&
+        comparisonData.length === 0 && (
+          <p style={{ color: "#5E7A6F" }}>
+            No meetings with both metrics logged yet.
+          </p>
+        )}
+
+      {activeView === "comparison" &&
+        !comparisonLoading &&
+        !comparisonError &&
+        comparisonData.length > 0 && (
+          <>
+            <ComparisonChart
+              data={comparisonData}
+              xLabel={COMPARISON_METRIC_LABELS[xMetric]}
+              yLabel={COMPARISON_METRIC_LABELS[yMetric]}
+            />
+            <div className="flex items-center gap-4 mb-10">
+              <button
+                onClick={handleAskAdvice}
+                disabled={!isPremium || adviceLoading}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-black disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #3ECF8E 0%, #2EB37A 100%)",
+                }}
+              >
+                {adviceLoading ? "Asking AI..." : "Ask AI for Advice"}
+              </button>
+              {advice && (
+                <p
+                  className="text-sm"
+                  style={{ color: adviceStale ? "#5E7A6F" : "#DCEAE3" }}
+                >
+                  {adviceStale ? "(based on previous selection) " : ""}
+                  {advice}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+
       {showStartModal && (
         <StartMeetingModal onClose={() => setShowStartModal(false)} />
       )}
@@ -245,6 +482,8 @@ const Dashboard = () => {
           meetingId={activeMeeting.id}
           onClose={() => setShowEndModal(false)}
         />
+      )}
+      </>
       )}
     </AppLayout>
   );

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useMeeting } from "../context/MeetingContext";
 
@@ -24,12 +25,27 @@ const SIDEBAR_ITEMS = [
 ];
 
 type AppLayoutProps = {
-  children: ReactNode;
+  children: ReactNode | ((isPremium: boolean) => ReactNode);
   activePage?: string;
 };
 
 const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
   const navigate = useNavigate();
+
+  const [isPremium, setIsPremium] = useState(false);
+
+  useEffect(() => {
+    const fetchMe = async () => {
+      const response = await fetch("http://localhost:4000/api/auth/me", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const me = await response.json();
+        setIsPremium(me.isPremium);
+      }
+    };
+    fetchMe();
+  }, []);
 
   const handleSignOut = async () => {
     if (activeMeeting) {
@@ -137,7 +153,7 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
 
         {/* Page-specific content goes here */}
         <main className="flex-1 w-full px-4 md:px-10 py-6 md:py-10">
-          {children}
+          {typeof children === "function" ? children(isPremium) : children}
         </main>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { pool } from "../db";
 import { hashPassword, verifyPassword } from "../auth/hash";
 import { createSession } from "../auth/session";
+import { requireAuth } from "../auth/middleware";
 
 
 const router = Router();
@@ -66,6 +67,26 @@ router.post("/signin", async (req: Request, res: Response) => {
   });
 
   res.status(200).json({ message: "Signed in successfully" });
+});
+
+router.get("/me", requireAuth, async (req: Request, res: Response) => {
+  const result = await pool.query(
+    "SELECT id, email, first_name, last_name, is_premium FROM users WHERE id = $1",
+    [req.userId],
+  );
+
+  if (result.rows.length === 0) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  const user = result.rows[0];
+  res.json({
+    id: user.id,
+    email: user.email,
+    firstName: user.first_name,
+    lastName: user.last_name,
+    isPremium: user.is_premium,
+  });
 });
 
 router.post("/signout", async (req: Request, res: Response) => {

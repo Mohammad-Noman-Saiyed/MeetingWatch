@@ -62,7 +62,7 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
     } catch {
       // even if the request fails, still send them back to sign-in
     } finally {
-      navigate("/signin");
+      navigate("/");
     }
   };
 

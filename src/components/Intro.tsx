@@ -17,9 +17,18 @@ const ScreenshotPlaceholder = ({
       className="flex items-center gap-1.5 px-3 py-2"
       style={{ borderBottom: "1px solid rgba(62,207,142,0.18)" }}
     >
-      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#3ECF8E" }} />
-      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#2EB37A" }} />
-      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#5E7A6F" }} />
+      <span
+        className="h-2.5 w-2.5 rounded-full"
+        style={{ background: "#3ECF8E" }}
+      />
+      <span
+        className="h-2.5 w-2.5 rounded-full"
+        style={{ background: "#2EB37A" }}
+      />
+      <span
+        className="h-2.5 w-2.5 rounded-full"
+        style={{ background: "#5E7A6F" }}
+      />
     </div>
     <div className="grid place-items-center h-40">
       <p className="text-sm font-medium" style={{ color: "#5E7A6F" }}>
@@ -36,7 +45,7 @@ const Intro = () => {
       style={{ background: "#0F1613" }}
     >
       <div className="flex flex-col justify-center pl-8">
-        <h3 className="font-semi-bold text-white text-4xl py-8">
+        <h3 className="font-medium text-white text-4xl py-8">
           What is MeetingWatch?
         </h3>
         <p className="pl-4 pr-16 text-2xl" style={{ color: "#DCEAE3" }}>
@@ -44,7 +53,7 @@ const Intro = () => {
           of each meeting and take impactful actions to increase every meeting's
           quality.
         </p>
-        <h3 className="font-semi-bold text-white text-4xl py-8">
+        <h3 className="font-medium text-white text-4xl py-8">
           How does it work?
         </h3>
         <p className="pl-4 pr-16 text-2xl" style={{ color: "#DCEAE3" }}>
@@ -56,7 +65,7 @@ const Intro = () => {
           the meeting was and attendee engagement + energy during the meetings
           to provide you with a meeting analysis.
         </p>
-        <h3 className="font-semi-bold text-white text-4xl py-8">
+        <h3 className="font-medium text-white text-4xl py-8">
           Why use MeetingWatch?
         </h3>
         <p className="pl-4 pr-16 text-2xl pb-36" style={{ color: "#DCEAE3" }}>

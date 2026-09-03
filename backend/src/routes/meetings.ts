@@ -3,6 +3,8 @@ import { pool } from "../db";
 import { requireAuth } from "../auth/middleware";
 import { genAI } from "../ai/gemini";
 import { requirePremium } from "../auth/premium";
+import { checkMeetingLimit } from "../auth/meetingLimit";
+import { checkAttendeeLimit } from "../auth/attendeeLimit";
 import { json } from "node:stream/consumers";
 
 const router = Router();
@@ -90,7 +92,7 @@ router.post("/:id/advice", requireAuth, async (req: Request, res: Response) => {
   const meetingId = req.params.id;
 
   const meetingResult = await pool.query(
-    `SELECT title, meeting_date, duration_minutes, overall_rating, engagement_score, could_be_email, notes
+    `SELECT title, meeting_date, duration_minutes, overall_rating, engagement_score, could_be_email, notes, ai_advice
      FROM meetings WHERE id = $1 AND user_id = $2`,
     [meetingId, req.userId],
   );
@@ -100,6 +102,10 @@ router.post("/:id/advice", requireAuth, async (req: Request, res: Response) => {
   }
 
   const meeting = meetingResult.rows[0];
+
+  if (meeting.ai_advice) {
+    return res.status(200).json({ advice: meeting.ai_advice });
+  }
 
   const prompt = `You are a meeting-productivity advisor. Give brief, actionable advice (3-4 sentences) for this meeting:
 Title: ${meeting.title}
@@ -182,40 +188,50 @@ router.get(
   },
 );
 
-router.post("/start", requireAuth, async (req: Request, res: Response) => {
-  const { title, attendeeIds } = req.body;
+router.post(
+  "/start",
+  requireAuth,
+  checkMeetingLimit,
+  checkAttendeeLimit,
+  async (req: Request, res: Response) => {
+    const { title, attendeeIds } = req.body;
 
-  if (!title) {
-    return res.status(400).json({ error: "Title is required" });
-  }
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
 
-  const meetingResult = await pool.query(
-    `INSERT INTO meetings (user_id, title, meeting_date, status, started_at)
+    const meetingResult = await pool.query(
+      `INSERT INTO meetings (user_id, title, meeting_date, status, started_at)
      VALUES ($1, $2, NOW(), 'in_progress', NOW())
      RETURNING id, title, started_at, status`,
-    [req.userId, title],
-  );
-
-  const meeting = meetingResult.rows[0];
-
-  if (attendeeIds && attendeeIds.length > 0) {
-  
-  const employeesResult = await pool.query(
-    `SELECT id, name, wage_amount, wage_type FROM employees WHERE user_id = $1 AND id = ANY($2::int[])`,
-    [req.userId, attendeeIds]
-  );
-
-  for (const employee of employeesResult.rows) {
-    await pool.query(
-      `INSERT INTO meeting_attendees (meeting_id, employee_id, name, wage_amount, wage_type)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [meeting.id, employee.id, employee.name, employee.wage_amount, employee.wage_type]
+      [req.userId, title],
     );
-  }
 
+    const meeting = meetingResult.rows[0];
+
+    if (attendeeIds && attendeeIds.length > 0) {
+      const employeesResult = await pool.query(
+        `SELECT id, name, wage_amount, wage_type FROM employees WHERE user_id = $1 AND id = ANY($2::int[])`,
+        [req.userId, attendeeIds],
+      );
+
+      for (const employee of employeesResult.rows) {
+        await pool.query(
+          `INSERT INTO meeting_attendees (meeting_id, employee_id, name, wage_amount, wage_type)
+       VALUES ($1, $2, $3, $4, $5)`,
+          [
+            meeting.id,
+            employee.id,
+            employee.name,
+            employee.wage_amount,
+            employee.wage_type,
+          ],
+        );
+      }
     }
-  res.status(201).json(meeting);
-});
+    res.status(201).json(meeting);
+  },
+);
 
 router.post("/:id/end", requireAuth, async (req: Request, res: Response) => {
   const meetingId = req.params.id;
@@ -296,40 +312,46 @@ Notes: ${meeting.notes ?? "none"}`;
   });
 });
 
-router.get('/comparison', requireAuth, requirePremium, async (req: Request, res: Response ) => {
-  const  { xMetric, yMetric } = req.query;
+router.get(
+  "/comparison",
+  requireAuth,
+  requirePremium,
+  async (req: Request, res: Response) => {
+    const { xMetric, yMetric } = req.query;
 
-  const validMetrics: Record<string, string> = {
-    rating: "overall_rating",
-    engagement: "engagement_score",
-    length: "duration_minutes",
-    cost: "final_cost",
-  };
+    const validMetrics: Record<string, string> = {
+      rating: "overall_rating",
+      engagement: "engagement_score",
+      length: "duration_minutes",
+      cost: "final_cost",
+    };
 
-  if (typeof xMetric !== "string"){
-    return res.status(400).json({ error: "Invalid x metric" });
-  }
-  if (typeof yMetric !== "string") {
-    return res.status(400).json({ error: "Invalid y metric" });
-  }
-  const xCol = validMetrics[xMetric];
-  const yCol = validMetrics[yMetric];
+    if (typeof xMetric !== "string") {
+      return res.status(400).json({ error: "Invalid x metric" });
+    }
+    if (typeof yMetric !== "string") {
+      return res.status(400).json({ error: "Invalid y metric" });
+    }
+    const xCol = validMetrics[xMetric];
+    const yCol = validMetrics[yMetric];
 
-  if(!xCol || !yCol){
-    return res.status(400).json({ error: "Invalid x or y metrics" });
-  }
+    if (!xCol || !yCol) {
+      return res.status(400).json({ error: "Invalid x or y metrics" });
+    }
 
-  const result = await pool.query(
-    `SELECT ${xCol} AS x, ${yCol} AS y
+    const result = await pool.query(
+      `SELECT ${xCol} AS x, ${yCol} AS y
     FROM meetings
     WHERE user_id = $1 AND ${xCol} IS NOT NULL AND ${yCol} IS NOT NULL
     ORDER BY x ASC`,
-    [req.userId]
-  );
+      [req.userId],
+    );
 
-  res.json(result.rows.map((row) => ({ x: Number(row.x), y: Number(row.y) })));
-
-});
+    res.json(
+      result.rows.map((row) => ({ x: Number(row.x), y: Number(row.y) })),
+    );
+  },
+);
 
 router.get(
   "/comparison/advice",

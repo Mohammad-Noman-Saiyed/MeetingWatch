@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 ideas_for_MeetingWatch.txt
 CLAUDE.md
+.claude/

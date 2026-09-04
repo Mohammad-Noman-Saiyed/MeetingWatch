@@ -100,7 +100,7 @@ const StartMeetingModal = ({ onClose }: StartMeetingModalProps) => {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Could not start meeting");
+        setError(data.error || "Could not start meeting, please try again");
         return;
       }
 

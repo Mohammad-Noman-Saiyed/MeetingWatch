@@ -24,7 +24,7 @@ export async function checkMeetingLimit(
   }
 
   const limitResult = await pool.query(
-    `SELECT COUNT(*) FROM meetings WHERE user_id = $1 AND started_at >= NOW() - INTERVAL '24 hours'`,
+    `SELECT COUNT(*) FROM meetings WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '24 hours'`,
     [userId],
   );
 

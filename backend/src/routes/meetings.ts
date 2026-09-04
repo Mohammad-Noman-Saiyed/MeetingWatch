@@ -18,41 +18,89 @@ router.get("/", requireAuth, async (req: Request, res: Response) => {
   res.json(result.rows);
 });
 
-router.post("/", requireAuth, async (req: Request, res: Response) => {
-  const {
-    title,
-    meetingDate,
-    durationMinutes,
-    notes,
-    overallRating,
-    engagementScore,
-    couldBeEmail,
-  } = req.body;
-
-  if (!title || !meetingDate) {
-    return res
-      .status(400)
-      .json({ error: "Title and meeting date are required" });
-  }
-
-  const result = await pool.query(
-    `INSERT INTO meetings (user_id, title, meeting_date, duration_minutes, notes, overall_rating, engagement_score, could_be_email)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING id, title, meeting_date, duration_minutes, status, overall_rating, engagement_score, could_be_email`,
-    [
-      req.userId,
+router.post(
+  "/",
+  requireAuth,
+  checkMeetingLimit,
+  checkAttendeeLimit,
+  async (req: Request, res: Response) => {
+    const {
       title,
       meetingDate,
-      durationMinutes || null,
-      notes || null,
-      overallRating || null,
-      engagementScore || null,
-      couldBeEmail || false,
-    ],
-  );
+      durationMinutes,
+      notes,
+      overallRating,
+      engagementScore,
+      couldBeEmail,
+      attendeeIds,
+    } = req.body;
 
-  res.status(201).json(result.rows[0]);
-});
+    if (!title || !meetingDate) {
+      return res
+        .status(400)
+        .json({ error: "Title and meeting date are required" });
+    }
+
+    //grab each employee and their wages
+    let employeesResult = [];
+    if (attendeeIds && attendeeIds.length > 0) {
+      employeesResult = (
+        await pool.query(
+          `SELECT id, name, wage_type, wage_amount FROM employees WHERE user_id = $1 AND id = ANY($2::int[])`,
+          [req.userId, attendeeIds],
+        )
+      ).rows;
+    }
+
+    const durationSeconds = durationMinutes * 60;
+
+    let costPerSecond = 0;
+    for (const attendee of employeesResult) {
+      const amount = Number(attendee.wage_amount);
+      costPerSecond +=
+        attendee.wage_type === "hourly"
+          ? amount / 3600
+          : amount / (2080 * 3600);
+    }
+    const finalCost = costPerSecond * durationSeconds;
+
+
+    //insert the new meeting into the db returning the new row
+    const result = await pool.query(
+      `INSERT INTO meetings (user_id, title, meeting_date, duration_minutes, notes, overall_rating, engagement_score, could_be_email, final_cost)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING id, title, meeting_date, duration_minutes, status, overall_rating, engagement_score, could_be_email`,
+      [
+        req.userId,
+        title,
+        meetingDate,
+        durationMinutes || null,
+        notes || null,
+        overallRating || null,
+        engagementScore || null,
+        couldBeEmail || false,
+        finalCost || null,
+      ],
+    );
+
+    //runs once for each attendee employee and links each one to the meeting via meeting_id
+    for (const employee of employeesResult) {
+      await pool.query(
+        `INSERT INTO meeting_attendees (meeting_id, employee_id, name, wage_amount, wage_type)
+       VALUES ($1, $2, $3, $4, $5)`,
+        [
+          result.rows[0].id,
+          employee.id,
+          employee.name,
+          employee.wage_amount,
+          employee.wage_type,
+        ],
+      );
+    }
+
+    res.status(201).json(result.rows[0]);
+  },
+);
 
 router.get("/trends", requireAuth, async (req: Request, res: Response) => {
   const { period, metric } = req.query;
@@ -217,14 +265,15 @@ router.post(
 
       for (const employee of employeesResult.rows) {
         await pool.query(
-          `INSERT INTO meeting_attendees (meeting_id, employee_id, name, wage_amount, wage_type)
-       VALUES ($1, $2, $3, $4, $5)`,
+          `INSERT INTO meeting_attendees (meeting_id, employee_id, name, wage_amount, wage_type, id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
           [
             meeting.id,
             employee.id,
             employee.name,
             employee.wage_amount,
             employee.wage_type,
+            attendeeIds,
           ],
         );
       }
@@ -238,15 +287,18 @@ router.post("/:id/end", requireAuth, async (req: Request, res: Response) => {
   const { notes, overallRating, engagementScore, couldBeEmail } = req.body;
 
   const meetingCheck = await pool.query(
-    `SELECT started_at FROM meetings WHERE id = $1 AND user_id = $2 AND status = 'in_progress'`,
+    `SELECT started_at, title FROM meetings WHERE id = $1 AND user_id = $2 AND status = 'in_progress'`,
     [meetingId, req.userId],
   );
 
   if (meetingCheck.rows.length === 0) {
-    return res.status(404).json({ error: "In-progress meeting not found" });
+    return res
+      .status(404)
+      .json({ error: "There's no meeting in-progress at the moment." });
   }
 
   const startedAt = meetingCheck.rows[0].started_at;
+  const title = meetingCheck.rows[0].title;
 
   const attendeesResult = await pool.query(
     `SELECT wage_amount, wage_type FROM meeting_attendees WHERE meeting_id = $1`,
@@ -264,13 +316,36 @@ router.post("/:id/end", requireAuth, async (req: Request, res: Response) => {
   }
   const finalCost = costPerSecond * durationSeconds;
 
+  const prompt = `You are a meeting-productivity advisor. Give clear, real, valuable, actionable advice (4-5 sentences) for this meeting:
+  Title: ${title}
+  Duration: ${durationMinutes} minutes
+  Final cost: $${finalCost.toFixed(2)}
+  Overall rating (1-5): ${overallRating ?? "not rated"}
+  Engagement score (1-10): ${engagementScore ?? "not rated"}
+  Could this have been an email instead: ${couldBeEmail ? "yes" : "no"}
+  Notes: ${notes ?? "none"}`;
+
+  let adviceText: string | undefined = "";
+
+  try {
+    const aiResponse = await genAI.models.generateContent({
+      model: "gemini-3.7-flash",
+      contents: prompt,
+    });
+    adviceText = aiResponse.text;
+  } catch (error) {
+    return res.status(503).json({
+      error: "There's high traffic at the moment, please try again later",
+    });
+  }
+
   const updateResult = await pool.query(
-    `UPDATE meetings
-     SET status = 'completed', ended_at = NOW(), duration_minutes = $1,
-         notes = $2, overall_rating = $3, engagement_score = $4, could_be_email = $5, final_cost = $6
-     WHERE id = $7 AND user_id = $8
+    `UPDATE meetings SET ai_advice = $1, status = 'completed', ended_at = NOW(), duration_minutes = $2,
+         notes = $3, overall_rating = $4, engagement_score = $5, could_be_email = $6, final_cost = $7
+     WHERE id = $8 AND user_id = $9
      RETURNING title, meeting_date, duration_minutes, overall_rating, engagement_score, could_be_email, notes`,
     [
+      adviceText || null,
       durationMinutes,
       notes || null,
       overallRating || null,
@@ -284,31 +359,10 @@ router.post("/:id/end", requireAuth, async (req: Request, res: Response) => {
 
   const meeting = updateResult.rows[0];
 
-  const prompt = `You are a meeting-productivity advisor. Give brief, actionable advice (3-4 sentences) for this meeting:
-Title: ${meeting.title}
-Duration: ${meeting.duration_minutes} minutes
-Final cost: $${finalCost.toFixed(2)}
-Overall rating (1-5): ${meeting.overall_rating ?? "not rated"}
-Engagement score (1-10): ${meeting.engagement_score ?? "not rated"}
-Could this have been an email instead: ${meeting.could_be_email ? "yes" : "no"}
-Notes: ${meeting.notes ?? "none"}`;
-
-  const aiResponse = await genAI.models.generateContent({
-    model: "gemini-3.7-flash",
-    contents: prompt,
-  });
-
-  const adviceText = aiResponse.text;
-
-  await pool.query(`UPDATE meetings SET ai_advice = $1 WHERE id = $2`, [
-    adviceText,
-    meetingId,
-  ]);
-
   res.status(200).json({
     ...meeting,
     finalCost: finalCost.toFixed(2),
-    advice: adviceText,
+    advice: adviceText || null,
   });
 });
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -233,7 +234,14 @@ const Dashboard = () => {
               </div>
               {!isPremium && (
                 <span className="text-xs" style={{ color: "#5E7A6F" }}>
-                  Comparison charts are a premium feature
+                  Comparison charts are a premium feature —{" "}
+                  <Link
+                    to="/pricing"
+                    className="cursor-pointer transition-colors hover:text-[#3ECF8E]"
+                    style={{ color: "#DCEAE3" }}
+                  >
+                    Upgrade
+                  </Link>
                 </span>
               )}
             </div>

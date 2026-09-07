@@ -25,6 +25,9 @@ const Footer = () => {
           <h4 className="font-bold text-white text-sm uppercase tracking-wide">
             Company
           </h4>
+          <Link to="/pricing" className={linkClass}>
+            Pricing
+          </Link>
           <Link to="/about" className={linkClass}>
             About Us
           </Link>

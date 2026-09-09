@@ -15,7 +15,7 @@ const sections: Section[] = [
     title: "About This Policy and Who Is Responsible",
     body: [
       "This Privacy Policy explains what personal information MeetingWatch (“we”, “us”, or “our”) collects, how we use it, who we disclose it to, how long we retain it, and the rights you have over it. It applies to your use of the MeetingWatch website and service (the “Service”) and forms part of our Terms of Service.",
-      "MeetingWatch is operated by an individual based in the Province of Ontario, Canada, and is not an incorporated company. That individual is accountable for the personal information described in this policy and can be reached at support@meetingwatch.com. We will provide their name and mailing address on request.",
+      "MeetingWatch is operated by an individual based in the Province of Ontario, Canada, and is not an incorporated company. That individual is accountable for the personal information described in this policy and can be reached at meeting.watch.support@gmail.com. We will provide their name and mailing address on request.",
       "We handle personal information in accordance with Canada's Personal Information Protection and Electronic Documents Act (PIPEDA) and applicable Ontario law. We extend the rights set out in this policy to all users, regardless of where they live.",
     ],
     links: [
@@ -177,7 +177,7 @@ const sections: Section[] = [
   {
     title: "Deleting Your Account",
     body: [
-      "Account deletion is not currently self-service. To have your account deleted, email support@meetingwatch.com from the address associated with your account. We will action the request within a reasonable period, and in any event within 30 days.",
+      "Account deletion is not currently self-service. To have your account deleted, email meeting.watch.support@gmail.com from the address associated with your account. We will action the request within a reasonable period, and in any event within 30 days.",
       "When we delete your account, we remove your account record, your meetings together with their notes and any stored AI advice, your employee roster, the attendee records attached to your meetings, and your signed-in sessions.",
       "Two categories of information cannot be deleted. Content already sent to Google's Gemini API is held by Google under Google's terms and is outside our control. In addition, we and Stripe may be required to retain basic payment and tax records relating to a Premium subscription for as long as the law requires.",
       "If you hold a Premium subscription, please cancel it before requesting deletion, or say so in your email, so that we can ensure billing does not continue.",
@@ -230,13 +230,13 @@ const sections: Section[] = [
   {
     title: "Contact Us, and How to Complain",
     body: [
-      "For any question about this policy, to request a copy of your information, to have information corrected, or to have your account deleted, contact support@meetingwatch.com. The individual who operates MeetingWatch is accountable for personal information handled by the Service and will provide their name and mailing address on request. MeetingWatch is operated from the Province of Ontario, Canada.",
+      "For any question about this policy, to request a copy of your information, to have information corrected, or to have your account deleted, contact meeting.watch.support@gmail.com. The individual who operates MeetingWatch is accountable for personal information handled by the Service and will provide their name and mailing address on request. MeetingWatch is operated from the Province of Ontario, Canada.",
       "If you are not satisfied with how we have handled your personal information, please contact us first so that we have an opportunity to resolve the matter. If it remains unresolved, you have the right to make a complaint to the Office of the Privacy Commissioner of Canada, which asks that concerns be raised with the organization before being brought to them. If you are located outside Canada, you may also have the right to complain to your local privacy regulator.",
     ],
     links: [
       {
-        label: "support@meetingwatch.com",
-        href: "mailto:support@meetingwatch.com",
+        label: "meeting.watch.support@gmail.com",
+        href: "mailto:meeting.watch.support@gmail.com",
       },
       {
         label: "Office of the Privacy Commissioner of Canada",

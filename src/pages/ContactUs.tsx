@@ -8,10 +8,10 @@ const ContactUs = () => {
           we'll get back to you.
         </p>
         <a
-          href="mailto:support@meetingwatch.com"
+          href="mailto:meeting.watch.support@gmail.com"
           className="mt-6 inline-block text-xl font-semibold cursor-pointer transition-colors text-[#3ECF8E] hover:text-[#2EB37A]"
         >
-          support@meetingwatch.com
+          meeting.watch.support@gmail.com
         </a>
       </div>
     </div>

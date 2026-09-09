@@ -68,6 +68,27 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
 
   const { activeMeeting } = useMeeting();
 
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      "This will permanently delete your account, including all of your meetings and employees. This cannot be undone. Are you sure?",
+    );
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch("http://localhost:4000/api/auth/me", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (response.ok) {
+        navigate("/");
+      } else {
+        window.alert("Could not delete account. Please try again.");
+      }
+    } catch {
+      window.alert("Could not delete account. Please try again.");
+    }
+  };
+
   const confirmNavigation = (path: string) => {
     if (activeMeeting) {
       const confirmed = window.confirm(
@@ -143,9 +164,17 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
           <div className="md:flex-1 mt-6 md:mt-0" />
 
           <button
-            onClick={handleSignOut}
+            onClick={handleDeleteAccount}
             className="rounded-lg px-4 py-3 text-sm font-medium text-left transition-colors cursor-pointer border hover:bg-[#E0574C]/10"
             style={{ borderColor: "rgba(224,87,76,0.4)", color: "#E0574C" }}
+          >
+            Delete account
+          </button>
+
+          <button
+            onClick={handleSignOut}
+            className="rounded-lg px-4 py-3 text-sm font-medium text-left  text-white cursor-pointer"
+            style={{ background: "#E0574C" }}
           >
             Sign out
           </button>

@@ -232,12 +232,12 @@ const sections: Section[] = [
   {
     title: "Contact",
     body: [
-      "If you have questions about these Terms, need to report a problem, or wish to have your account and data deleted, contact us at support@meetingwatch.com. MeetingWatch is operated from the Province of Ontario, Canada.",
+      "If you have questions about these Terms, need to report a problem, or wish to have your account and data deleted, contact us at meeting.watch.support@gmail.com. MeetingWatch is operated from the Province of Ontario, Canada.",
     ],
     links: [
       {
-        label: "support@meetingwatch.com",
-        href: "mailto:support@meetingwatch.com",
+        label: "meeting.watch.support@gmail.com",
+        href: "mailto:meeting.watch.support@gmail.com",
       },
       { label: "Privacy Policy", href: "/privacy" },
     ],

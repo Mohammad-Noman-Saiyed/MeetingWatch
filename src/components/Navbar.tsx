@@ -1,9 +1,10 @@
 import logo from "../assets/MeetingWatch_Transparent.png";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -13,10 +14,12 @@ const Navbar = () => {
       });
       if (response.ok) {
         setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
       }
     };
     fetchLog();
-  }, []);
+  }, [location]);
 
   const handleSignOut = async () => {
     try {

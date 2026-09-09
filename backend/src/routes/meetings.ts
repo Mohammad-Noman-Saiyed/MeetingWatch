@@ -64,7 +64,6 @@ router.post(
     }
     const finalCost = costPerSecond * durationSeconds;
 
-
     //insert the new meeting into the db returning the new row
     const result = await pool.query(
       `INSERT INTO meetings (user_id, title, meeting_date, duration_minutes, notes, overall_rating, engagement_score, could_be_email, final_cost)
@@ -265,15 +264,14 @@ router.post(
 
       for (const employee of employeesResult.rows) {
         await pool.query(
-          `INSERT INTO meeting_attendees (meeting_id, employee_id, name, wage_amount, wage_type, id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+          `INSERT INTO meeting_attendees (meeting_id, employee_id, name, wage_amount, wage_type)
+       VALUES ($1, $2, $3, $4, $5)`,
           [
             meeting.id,
             employee.id,
             employee.name,
             employee.wage_amount,
             employee.wage_type,
-            attendeeIds,
           ],
         );
       }

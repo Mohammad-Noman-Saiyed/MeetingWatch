@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_URL } from "../config";
 import { useNavigate } from "react-router-dom"; // 1. Import the hook
 
 const SignIn = () => {
@@ -15,7 +16,7 @@ const SignIn = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:4000/api/auth/signin", {
+      const response = await fetch(`${API_URL}/api/auth/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

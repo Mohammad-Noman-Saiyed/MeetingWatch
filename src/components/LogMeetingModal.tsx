@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useEffect } from "react";
+import { API_URL } from "../config";
 
 type Meeting = {
   id: number;
@@ -49,7 +50,7 @@ const LogMeetingModal = ({
   const fetchEmployees = async () => {
     setIsLoadingEmployees(true);
     try {
-      const response = await fetch("http://localhost:4000/api/employees", {
+      const response = await fetch(`${API_URL}/api/employees`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -74,7 +75,7 @@ const LogMeetingModal = ({
   const handleQuickAdd = async () => {
     setIsQuickAdding(true);
     try {
-      const response = await fetch("http://localhost:4000/api/employees", {
+      const response = await fetch(`${API_URL}/api/employees`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -108,7 +109,7 @@ const LogMeetingModal = ({
 
     try {
       // Step 1: create the meeting
-      const createResponse = await fetch("http://localhost:4000/api/meetings", {
+      const createResponse = await fetch(`${API_URL}/api/meetings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import AppLayout from "../components/AppLayout";
 import LogMeetingModal from "../components/LogMeetingModal";
 import AdviceModal from "../components/AdviceModal";
+import { API_URL } from "../config";
 
 type Meeting = {
   id: number;
@@ -22,7 +23,7 @@ const PastMeetings = () => {
   useEffect(() => {
     const fetchMeetings = async () => {
       try {
-        const response = await fetch("http://localhost:4000/api/meetings", {
+        const response = await fetch(`${API_URL}/api/meetings`, {
           credentials: "include",
         });
 
@@ -61,7 +62,7 @@ const PastMeetings = () => {
     setIsAdviceLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:4000/api/meetings/${meetingId}/advice`,
+        `${API_URL}/api/meetings/${meetingId}/advice`,
         {
           method: "POST",
           credentials: "include",

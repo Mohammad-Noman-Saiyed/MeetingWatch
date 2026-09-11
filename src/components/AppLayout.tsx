@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useMeeting } from "../context/MeetingContext";
+import { API_URL } from "../config";
 
 const SIDEBAR_ITEMS = [
   {
@@ -36,7 +37,7 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
 
   useEffect(() => {
     const fetchMe = async () => {
-      const response = await fetch("http://localhost:4000/api/auth/me", {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -55,7 +56,7 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
       if (!confirmed) return;
     }
     try {
-      await fetch("http://localhost:4000/api/auth/signout", {
+      await fetch(`${API_URL}/api/auth/signout`, {
         method: "POST",
         credentials: "include",
       });
@@ -75,7 +76,7 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
     if (!confirmed) return;
 
     try {
-      const response = await fetch("http://localhost:4000/api/auth/me", {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
         method: "DELETE",
         credentials: "include",
       });

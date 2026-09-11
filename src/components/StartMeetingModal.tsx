@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMeeting } from "../context/MeetingContext";
+import { API_URL } from "../config";
 
 type Employee = {
   id: number;
@@ -33,7 +34,7 @@ const StartMeetingModal = ({ onClose }: StartMeetingModalProps) => {
   const fetchEmployees = async () => {
     setIsLoadingEmployees(true);
     try {
-      const response = await fetch("http://localhost:4000/api/employees", {
+      const response = await fetch(`${API_URL}/api/employees`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -59,7 +60,7 @@ const StartMeetingModal = ({ onClose }: StartMeetingModalProps) => {
     e.preventDefault();
     setIsQuickAdding(true);
     try {
-      const response = await fetch("http://localhost:4000/api/employees", {
+      const response = await fetch(`${API_URL}/api/employees`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -90,7 +91,7 @@ const StartMeetingModal = ({ onClose }: StartMeetingModalProps) => {
 
     setIsStarting(true);
     try {
-      const response = await fetch("http://localhost:4000/api/meetings/start", {
+      const response = await fetch(`${API_URL}/api/meetings/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

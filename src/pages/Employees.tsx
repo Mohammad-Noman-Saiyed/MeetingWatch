@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import AppLayout from "../components/AppLayout";
+import { API_URL } from "../config";
 
 type Employee = {
   id: number;
@@ -17,7 +18,7 @@ const Employees = () => {
     setIsLoading(true);
     setError("");
     try {
-      const response = await fetch("http://localhost:4000/api/employees", {
+      const response = await fetch(`${API_URL}/api/employees`, {
         credentials: "include",
       });
       if (!response.ok) {
@@ -49,7 +50,7 @@ const Employees = () => {
     setAddError("");
     setIsAdding(true);
     try {
-      const response = await fetch("http://localhost:4000/api/employees", {
+      const response = await fetch(`${API_URL}/api/employees`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -100,7 +101,7 @@ const Employees = () => {
     setIsSaving(true);
     try {
       const response = await fetch(
-        `http://localhost:4000/api/employees/${id}`,
+        `${API_URL}/api/employees/${id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -129,7 +130,7 @@ const Employees = () => {
   const handleDelete = async (id: number) => {
     try {
       const response = await fetch(
-        `http://localhost:4000/api/employees/${id}`,
+        `${API_URL}/api/employees/${id}`,
         {
           method: "DELETE",
           credentials: "include",

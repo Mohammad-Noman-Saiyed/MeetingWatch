@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth";
 import meetingsRoutes from "./routes/meetings";
 import employeesRoutes from "./routes/employees";
 import billingRoutes from "./routes/billing";
+import { FRONTEND_URL } from "./config";
 
 dotenv.config();
 
@@ -13,7 +14,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // the Vite dev server's URL
+    origin: FRONTEND_URL,
     credentials: true, // allows cookies to be sent cross-origin
   }),
 );

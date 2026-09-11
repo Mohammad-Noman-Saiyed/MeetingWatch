@@ -15,6 +15,7 @@ import StartMeetingModal from "../components/StartMeetingModal";
 import LiveMeetingView from "../components/LiveMeetingView";
 import EndMeetingModal from "../components/EndMeetingModal";
 import { useMeeting } from "../context/MeetingContext";
+import { API_URL } from "../config";
 
 type Period = "weekly" | "monthly" | "annually";
 type Metric = "count" | "rating" | "engagement" | "length" | "cost";
@@ -83,7 +84,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchEmployees = async () => {
-      const response = await fetch("http://localhost:4000/api/employees", {
+      const response = await fetch(`${API_URL}/api/employees`, {
         credentials: "include",
       });
       if (response.ok) setEmployees(await response.json());
@@ -97,7 +98,7 @@ const Dashboard = () => {
       setError("");
       try {
         const response = await fetch(
-          `http://localhost:4000/api/meetings/trends?period=${period}&metric=${metric}`,
+          `${API_URL}/api/meetings/trends?period=${period}&metric=${metric}`,
           { credentials: "include" },
         );
         if (!response.ok) {
@@ -129,7 +130,7 @@ const Dashboard = () => {
       setAdviceStale(true);
       try {
         const response = await fetch(
-          `http://localhost:4000/api/meetings/comparison?xMetric=${xMetric}&yMetric=${yMetric}`,
+          `${API_URL}/api/meetings/comparison?xMetric=${xMetric}&yMetric=${yMetric}`,
           { credentials: "include" },
         );
         if (!response.ok) {
@@ -151,7 +152,7 @@ const Dashboard = () => {
     setAdviceLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:4000/api/meetings/comparison/advice?xMetric=${xMetric}&yMetric=${yMetric}`,
+        `${API_URL}/api/meetings/comparison/advice?xMetric=${xMetric}&yMetric=${yMetric}`,
         { credentials: "include" },
       );
       if (!response.ok) return;

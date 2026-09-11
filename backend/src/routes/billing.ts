@@ -7,10 +7,9 @@ import {
   STRIPE_WEBHOOK_SECRET,
 } from "../billing/stripe";
 import { requireAuth } from "../auth/middleware";
+import { FRONTEND_URL } from "../config";
 
 const router = Router();
-
-const FRONTEND_URL = "http://localhost:5173";
 
 router.post("/checkout", requireAuth, async (req: Request, res: Response) => {
   const result = await pool.query(

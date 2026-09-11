@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMeeting } from "../context/MeetingContext";
+import { API_URL } from "../config";
 
 type EndMeetingModalProps = {
   meetingId: number;
@@ -31,7 +32,7 @@ const EndMeetingModal = ({ meetingId, onClose }: EndMeetingModalProps) => {
     setIsSubmitting(true);
     try {
       const response = await fetch(
-        `http://localhost:4000/api/meetings/${meetingId}/end`,
+        `${API_URL}/api/meetings/${meetingId}/end`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

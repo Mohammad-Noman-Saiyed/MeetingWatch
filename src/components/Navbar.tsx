@@ -1,6 +1,7 @@
 import logo from "../assets/MeetingWatch_Transparent.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { API_URL } from "../config";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -9,7 +10,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const fetchLog = async () => {
-      const response = await fetch("http://localhost:4000/api/auth/me", {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -23,7 +24,7 @@ const Navbar = () => {
 
   const handleSignOut = async () => {
     try {
-      await fetch("http://localhost:4000/api/auth/signout", {
+      await fetch(`${API_URL}/api/auth/signout`, {
         method: "POST",
         credentials: "include",
       });

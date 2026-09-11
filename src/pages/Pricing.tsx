@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 const FREE_FEATURES = [
   "1 meeting per 24 hours",
@@ -26,7 +27,7 @@ const Pricing = () => {
 
   useEffect(() => {
     const fetchMe = async () => {
-      const response = await fetch("http://localhost:4000/api/auth/me", {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
         credentials: "include",
       });
       if (response.ok) {
@@ -43,7 +44,7 @@ const Pricing = () => {
     setError("");
     try {
       const response = await fetch(
-        "http://localhost:4000/api/billing/checkout",
+        `${API_URL}/api/billing/checkout`,
         { method: "POST", credentials: "include" },
       );
       const data = await response.json();
@@ -63,7 +64,7 @@ const Pricing = () => {
     setIsLoading(true);
     setError("");
     try {
-      const response = await fetch("http://localhost:4000/api/billing/portal", {
+      const response = await fetch(`${API_URL}/api/billing/portal`, {
         method: "POST",
         credentials: "include",
       });

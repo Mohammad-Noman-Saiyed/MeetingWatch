@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config";
 
 const SignUp = () => {
   const [firstName, setFirstName] = useState("");
@@ -17,7 +18,7 @@ const SignUp = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:4000/api/auth/signup", {
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // needed so the browser stores/sends the session cookie

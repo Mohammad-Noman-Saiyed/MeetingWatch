@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useMeeting } from "../context/MeetingContext";
 import { API_URL } from "../config";
+import StartMeetingModal from "./StartMeetingModal";
 
 const SIDEBAR_ITEMS = [
   {
@@ -32,7 +33,7 @@ type AppLayoutProps = {
 
 const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
   const navigate = useNavigate();
-
+  const [showStartModal, setShowStartModal] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
@@ -115,8 +116,8 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
         </span>
 
         <button
-          onClick={() => navigate("/meetings/new")}
-          className="rounded-lg px-6 py-2.5 text-sm font-semibold text-black transition-transform cursor-pointer hover:scale-[1.02]"
+          onClick={() => setShowStartModal(true)}
+          className="text-center  rounded-lg py-4 text-lg px-16 font-semibold text-black transition-transform cursor-pointer hover:scale-[1.02]"
           style={{
             background: "linear-gradient(135deg, #3ECF8E 0%, #2EB37A 100%)",
             boxShadow: "0 4px 16px -4px rgba(62,207,142,0.4)",
@@ -186,6 +187,9 @@ const AppLayout = ({ children, activePage = "Dashboard" }: AppLayoutProps) => {
           {typeof children === "function" ? children(isPremium) : children}
         </main>
       </div>
+      {showStartModal && (
+        <StartMeetingModal onClose={() => setShowStartModal(false)} />
+      )}
     </div>
   );
 };

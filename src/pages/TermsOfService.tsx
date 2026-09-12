@@ -167,7 +167,7 @@ const sections: Section[] = [
     body: [
       "MeetingWatch is an early-stage product operated by one person. We do not warrant that the Service will be available at any particular time, or that it will be uninterrupted, secure, or error-free, and we do not offer a service level agreement.",
       "We may add, change, suspend, or discontinue any part of the Service, including features currently offered on either plan, and we may take the Service offline for maintenance. If we discontinue the Service entirely, or make a change that significantly reduces what a paid subscription includes, we will make reasonable efforts to give notice.",
-      "The Service depends on third parties, including Google and Stripe. If one of them becomes unavailable or changes its terms, features that rely on it may cease to function.",
+      "The Service depends on third parties, including Google, Stripe, and Amazon Web Services, which provides the servers and database it runs on. If one of them becomes unavailable or changes its terms, the Service or the features that rely on it may cease to function.",
       "You should not rely on MeetingWatch as the sole record of any information you cannot afford to lose, and should retain your own copy of anything important.",
     ],
   },

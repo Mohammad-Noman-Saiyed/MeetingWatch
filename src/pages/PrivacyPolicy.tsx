@@ -54,14 +54,14 @@ const sections: Section[] = [
     body: [
       "MeetingWatch does not use analytics, advertising, tracking pixels, session recording, or device fingerprinting. We do not build advertising profiles, do not track you across other websites, and do not sell or share personal information with data brokers or advertisers. The site loads no third-party scripts, fonts, or other external resources.",
       "We do not request or store your phone number, postal address, date of birth, location, or a profile photo. The Service does not request access to your camera, microphone, contacts, calendar, or files.",
-      "Our server receives your device's IP address as a necessary part of responding to your requests, as any web server does. We do not record it in our database, and no feature of the Service uses it to identify, track, or profile you. Where the Service is hosted on third-party infrastructure, that provider may retain standard server logs, which typically include IP addresses, for security and reliability purposes.",
+      "Our server receives your device's IP address as a necessary part of responding to your requests, as any web server does. We do not record it in our database, and no feature of the Service uses it to identify, track, or profile you. Amazon Web Services, which provides the infrastructure the Service runs on, may retain standard server and content delivery logs, which typically include IP addresses, for security and reliability purposes. Its role is described further below.",
     ],
   },
   {
     title: "Cookies and Browser Storage",
     body: [
       "MeetingWatch sets a single cookie, named session_id. It is created when you sign in and is what keeps you signed in as you move between pages. It contains a random value and no personal information.",
-      "The cookie is marked HttpOnly, so it cannot be read by scripts running on the page, and SameSite=Strict, so your browser will not send it when you arrive from another site. It expires 24 hours after you sign in. When you sign out, the session is deleted from our server and the cookie is cleared from your browser.",
+      "The cookie is marked HttpOnly, so it cannot be read by scripts running on the page, SameSite=Strict, so your browser will not send it when you arrive from another site, and Secure, so your browser will only send it over an encrypted HTTPS connection. It expires 24 hours after you sign in. When you sign out, the session is deleted from our server and the cookie is cleared from your browser.",
       "This is a strictly necessary cookie: it exists solely to keep you signed in, and the Service cannot function without it. We set no analytics or advertising cookies, and no third party sets cookies through our site. For this reason, no cookie consent banner is shown, as there is nothing optional to consent to.",
       "MeetingWatch stores nothing else in your browser. It does not use local storage, session storage, or any other client-side database. Your information is held on our server.",
     ],
@@ -137,9 +137,30 @@ const sections: Section[] = [
     ],
   },
   {
+    title: "Hosting and Infrastructure",
+    body: [
+      "MeetingWatch runs on infrastructure rented from Amazon Web Services (AWS). AWS provides the servers that run the Service and the database that holds your information, which means everything described in this policy is stored on equipment AWS operates. It acts as our service provider: it holds and processes your information so that the Service can run, and its published commitments state that it does not access or use customer content for its own purposes, including for marketing or advertising.",
+      "Your account, meetings, roster, and attendance records are held in the AWS Canada (Central) region, whose data centres are near Montreal, in the Province of Quebec. AWS states that it will not move or replicate customer content outside the region we have selected without our agreement, other than as necessary to provide the services we have asked for or to comply with the law.",
+      "The following measures apply to that infrastructure:",
+    ],
+    bullets: [
+      "Connections between your browser and MeetingWatch are encrypted using HTTPS, both for the website itself and for the requests it makes to our server.",
+      "The database and the server's disk are encrypted while stored.",
+      "The connection between our application server and the database is encrypted, and our server checks the database's certificate before sending anything over it.",
+      "The static files that make up the website, meaning its code, styling, and images, are distributed by Amazon CloudFront, a content delivery network with servers in many countries. Those files are the same for every visitor and contain no personal information. Requests that carry your personal information go directly to our server in Canada and do not pass through that network.",
+    ],
+    links: [
+      {
+        label: "AWS's data privacy commitments",
+        href: "https://aws.amazon.com/compliance/data-privacy-faq/",
+      },
+    ],
+  },
+  {
     title: "Who Else We Share Your Information With",
     body: [
-      "We do not disclose your personal information to any third party other than Google and Stripe, as described in the preceding sections. Each receives only the information set out there.",
+      "We do not disclose your personal information to any third party other than Google, Stripe, and Amazon Web Services, as described in the preceding sections. Each receives only the information set out there. Google and Stripe receive particular information because a feature you have used requires it; AWS holds your information because it provides the servers and database the Service runs on.",
+      "Our domain names are registered with Cloudflare, which also answers the address lookups for them. No personal information is disclosed to Cloudflare in the process: it is configured to answer those lookups only and does not carry or relay traffic between you and the Service, so the content of your requests does not reach it.",
       "We do not sell your personal information. We do not rent, trade, or share it for advertising purposes, and we do not provide it to data brokers, marketing companies, or analytics providers.",
       "Two exceptions apply. We may disclose information where required by law, for example in response to a valid court order or legal process, and will limit any such disclosure to what is required. If MeetingWatch is transferred to another owner, your information may transfer as part of that transaction; we will give notice if this occurs, and the information will remain subject to a policy no less protective than this one.",
     ],
@@ -147,9 +168,10 @@ const sections: Section[] = [
   {
     title: "Where Your Information Is Stored, and Transfers Outside Canada",
     body: [
-      "Your account, meetings, roster, and attendance records are stored in a PostgreSQL database operated from the Province of Ontario, Canada.",
-      "Two parts of the Service involve information leaving Canada: content sent to the Gemini API is processed by Google, and payment information is processed by Stripe. Both are United States companies and may process and store information in the United States or in other countries.",
+      "Your account, meetings, roster, and attendance records are stored in a PostgreSQL database hosted in Canada, in the AWS Canada (Central) region near Montreal, Quebec. MeetingWatch itself is operated from the Province of Ontario.",
+      "Two parts of the Service involve information leaving Canada: content sent to the Gemini API is processed by Google, and payment information is processed by Stripe. Both are United States companies and may process and store information in the United States or in other countries. The website's static files are also served from a content delivery network with servers in many countries, as described above, although those files contain no personal information.",
       "While personal information is located in another country, it is subject to the laws of that country and may be accessible to its courts, law enforcement, and regulatory authorities.",
+      "Although the information held in our database stays in Canada, Amazon Web Services is part of a United States corporate group and may therefore be subject to legal process in that country. AWS states that it will not disclose customer content unless required to do so by law or by a valid and binding order, and that where it is not legally prohibited from doing so it will give reasonable notice of such a demand.",
     ],
   },
   {
@@ -187,6 +209,7 @@ const sections: Section[] = [
     title: "How We Protect Your Information",
     body: [
       "Passwords are hashed with argon2 and the original is never stored. Signed-in sessions are identified by a 256-bit random value held in a cookie that cannot be read by page scripts and is not sent from other sites, and they expire after 24 hours.",
+      "Information you send to and receive from MeetingWatch travels over encrypted HTTPS connections, and the session cookie is marked so that your browser will only send it over one. Your information is encrypted while stored in our database, and the connection between our application server and that database is encrypted and checked against the database's certificate.",
       "Every database query that reads or writes your information is scoped to your own account, so one user's identifier cannot be used to reach another user's data. Queries are parameterized, and the few places where a column name is selected dynamically accept only values from a fixed internal list. Messages received from Stripe are cryptographically verified before being acted upon, and card details are never received by our servers.",
       "We do not deliberately record personal information in our server logs, although a technical error message may on occasion contain an email address.",
       "No method of transmitting or storing information is completely secure, and we cannot guarantee absolute security. MeetingWatch is an early-stage service operated by one person, which you should take into account when deciding what information to enter. Entering less information, such as initials rather than full names and no wage figures, remains the most effective protection available to you.",
@@ -252,7 +275,7 @@ const PrivacyPolicy = () => {
       <div className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="font-bold text-white text-4xl py-4">Privacy Policy</h1>
         <p className="text-sm" style={{ color: "#5E7A6F" }}>
-          Effective date: September 7, 2026
+          Effective date: September 11, 2026
         </p>
         <p className="mt-6 text-lg" style={{ color: "#DCEAE3" }}>
           This policy explains what information MeetingWatch collects, how it is

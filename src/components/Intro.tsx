@@ -1,12 +1,17 @@
-const ScreenshotPlaceholder = ({
-  label,
+import dashboardPic1 from "../assets/meetingwatch-dashboardpic-1.png";
+import dashboardPic2 from "../assets/meetingwatch-dashboardpic-2.png";
+
+const ScreenshotWindow = ({
+  src,
+  alt,
   className = "",
 }: {
-  label: string;
+  src: string;
+  alt: string;
   className?: string;
 }) => (
   <div
-    className={`w-full max-w-md rounded-xl overflow-hidden ${className}`}
+    className={`w-full max-w-xl rounded-xl overflow-hidden ${className}`}
     style={{
       background: "#0A0F0D",
       border: "1px solid rgba(62,207,142,0.4)",
@@ -30,11 +35,7 @@ const ScreenshotPlaceholder = ({
         style={{ background: "#5E7A6F" }}
       />
     </div>
-    <div className="grid place-items-center h-40">
-      <p className="text-sm font-medium" style={{ color: "#5E7A6F" }}>
-        {label}
-      </p>
-    </div>
+    <img src={src} alt={alt} className="w-full h-auto block" />
   </div>
 );
 
@@ -77,13 +78,15 @@ const Intro = () => {
           out of every meeting.
         </p>
       </div>
-      <div className="hidden md:flex flex-col items-center justify-center gap-8 px-8 py-12">
-        <ScreenshotPlaceholder
-          label="Live meeting cost tracker — preview"
+      <div className="hidden md:flex flex-col items-center justify-center gap-16 px-8 py-8">
+        <ScreenshotWindow
+          src={dashboardPic2}
+          alt="Meeting reports trend chart"
           className="rotate-1"
         />
-        <ScreenshotPlaceholder
-          label="Meeting analytics dashboard — preview"
+        <ScreenshotWindow
+          src={dashboardPic1}
+          alt="Meeting reports comparison chart"
           className="-rotate-1"
         />
       </div>
